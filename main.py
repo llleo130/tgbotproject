@@ -168,7 +168,7 @@ def show_stats(message):
     user_id = message.from_user.id
     
     # Замени 123456789 на свой Telegram ID
-    if user_id != 123456789:
+    if user_id != 6884016409:
         lang = user_data.get(message.chat.id, {}).get('lang', 'ru')
         response = "❌ Эта команда только для админа" if lang == 'ru' else "❌ This command is for admin only"
         bot.send_message(message.chat.id, response)
@@ -648,3 +648,4 @@ if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     print(f"🌐 Web server started on port {port}")
     app.run(host='0.0.0.0', port=port, debug=False)
+

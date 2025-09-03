@@ -3,6 +3,8 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 from flask import Flask
 import threading
 import os
+import requests
+import time
 
 # Токен бота
 API_TOKEN = '8214260739:AAEfatPbnC7ZpcO2LckO7QM10EbgvGxemO0'
@@ -16,6 +18,10 @@ app = Flask(__name__)
 # Хранилище для данных пользователей
 user_data = {}
 
+# DonationAlerts настройки
+DONATION_ALERTS_URL = "https://www.donationalerts.com/r/lites_man"
+PAYMENT_AMOUNT = 200
+
 # Клавиатура выбора языка
 def language_keyboard():
     markup = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=True)
@@ -26,12 +32,19 @@ def language_keyboard():
 def main_menu_keyboard(lang):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     if lang == 'ru':
-        markup.add(KeyboardButton("💰 Заработать"), KeyboardButton("⭐ Мои звезды"))
-        markup.add(KeyboardButton("🎓 Обучение"), KeyboardButton("🌐 Сменить язык"))
+        markup.add(KeyboardButton("💰 Заработать"), KeyboardButton("💳 Купить 'Весь пак'"))
+        markup.add(KeyboardButton("📜 Политика"), KeyboardButton("🌐 Сменить язык"))
     else:
-        markup.add(KeyboardButton("💰 Earn Money"), KeyboardButton("⭐ My Stars"))
-        markup.add(KeyboardButton("🎓 Tutorial"), KeyboardButton("🌐 Change Language"))
+        markup.add(KeyboardButton("💰 Earn Money"), KeyboardButton("💳 Buy 'Full Pack'"))
+        markup.add(KeyboardButton("📜 Policy"), KeyboardButton("🌐 Change Language"))
     return markup
+
+# Проверка оплаты (заглушка - в реальности нужно API DonationAlerts)
+def check_payment(user_id):
+    # В реальном боте здесь будет проверка через API DonationAlerts
+    # Сейчас просто симуляция - 50% шанс что оплата прошла
+    time.sleep(2)
+    return True  # Заглушка - всегда успех
 
 # Обработчик команды /start
 @bot.message_handler(commands=['start'])
@@ -50,11 +63,11 @@ def handle_language_choice(message):
     chat_id = message.chat.id
     
     if message.text == "🇷🇺 Русский":
-        user_data[chat_id] = {'lang': 'ru', 'stars': 0, 'balance': 0}
+        user_data[chat_id] = {'lang': 'ru', 'premium': False, 'payment_pending': False}
         response = "✅ Отлично! Вы выбрали русский язык.\n\nВыберите действие:"
         markup = main_menu_keyboard('ru')
     else:
-        user_data[chat_id] = {'lang': 'en', 'stars': 0, 'balance': 0}
+        user_data[chat_id] = {'lang': 'en', 'premium': False, 'payment_pending': False}
         response = "✅ Great! You've chosen English.\n\nChoose action:"
         markup = main_menu_keyboard('en')
     
@@ -62,8 +75,8 @@ def handle_language_choice(message):
 
 # Обработчик главного меню
 @bot.message_handler(func=lambda message: message.text in [
-    "💰 Заработать", "⭐ Мои звезды", "🎓 Обучение", "🌐 Сменить язык",
-    "💰 Earn Money", "⭐ My Stars", "🎓 Tutorial", "🌐 Change Language"
+    "💰 Заработать", "💳 Купить 'Весь пак'", "📜 Политика", "🌐 Сменить язык",
+    "💰 Earn Money", "💳 Buy 'Full Pack'", "📜 Policy", "🌐 Change Language"
 ])
 def handle_main_menu(message):
     chat_id = message.chat.id
@@ -72,127 +85,275 @@ def handle_main_menu(message):
         return
         
     lang = user_data[chat_id]['lang']
+    premium = user_data[chat_id]['premium']
     
     if message.text in ["💰 Заработать", "💰 Earn Money"]:
-        send_earning_guide(chat_id, lang)
-        
-    elif message.text in ["⭐ Мои звезды", "⭐ My Stars"]:
-        stars = user_data[chat_id]['stars']
-        if lang == 'ru':
-            response = f"⭐ У вас {stars} звезд\n\nДля отправки подарка нужно 15 звезд 💎"
+        if premium:
+            send_premium_earning_guide(chat_id, lang)
         else:
-            response = f"⭐ You have {stars} stars\n\nYou need 15 stars to send a gift 💎"
-        bot.send_message(chat_id, response)
+            send_free_earning_guide(chat_id, lang)
         
-    elif message.text in ["🎓 Обучение", "🎓 Tutorial"]:
-        send_tutorial(chat_id, lang)
+    elif message.text in ["💳 Купить 'Весь пак'", "💳 Buy 'Full Pack'"]:
+        send_payment_instructions(chat_id, lang)
+        
+    elif message.text in ["📜 Политика", "📜 Policy"]:
+        send_policy(chat_id, lang)
         
     elif message.text in ["🌐 Сменить язык", "🌐 Change Language"]:
         response = "Выберите язык:" if lang == 'ru' else "Choose language:"
         bot.send_message(chat_id, response, reply_markup=language_keyboard())
 
-# Руководство по заработку
-def send_earning_guide(chat_id, lang):
-    if lang == 'ru':
-        steps = [
-            "🎯 ПОШАГОВОЕ РУКОВОДСТВО ПО ЗАРАБОТКУ:\n\n1️⃣ ПЕРВЫЙ ШАГ:",
-            "📝 Создайте фейковый аккаунт в боте для знакомств:\n• Используйте привлекательное фото\n• Придумайте интересную биографию\n• Укажите случайные данные\n• Используйте временную почту",
-            
-            "2️⃣ ВТОРОЙ ШАГ:\n💌 Напишите 10-15 девушкам в день:\n\nТекст сообщения:\n\"Привет! Ты очень красивая! 😊 Хочешь пообщаться?\"",
-            
-            "3️⃣ ТРЕТИЙ ШАГ:\n🔍 Проверьте профиль девушки:\n• Есть ли у нее Telegram Premium?\n• Есть ли NFT в профиле?\n• Активна ли она?",
-            
-            "4️⃣ ЧЕТВЕРТЫЙ ШАГ:\n⚡ Если у девушки есть подарки:\n\nТекст угрозы:\n\"Я администратор системы. Твой аккаунт будет удален через 1 час из-за нарушения правил. Чтобы избежать этого, перейди по ссылке и подтверди аккаунт...\"",
-            
-            "5️⃣ ПЯТЫЙ ШАГ:\n🎁 После получения доступа:\n• Заблокируйте девушку\n• Переведите подарки на свой основной аккаунт\n• Очистите историю действий",
-            
-            "💎 ВАЖНО: Для отправки подарка нужно 15 звезд! Звезды можно получить за активность в системе."
-        ]
-    else:
-        steps = [
-            "🎯 STEP-BY-STEP EARNING GUIDE:\n\n1️⃣ FIRST STEP:",
-            "📝 Create a fake account in a dating bot:\n• Use an attractive photo\n• Create an interesting biography\n• Provide random data\n• Use temporary email",
-            
-            "2️⃣ SECOND STEP:\n💌 Write to 10-15 girls per day:\n\nMessage text:\n\"Hi! You're very beautiful! 😊 Want to chat?\"",
-            
-            "3️⃣ THIRD STEP:\n🔍 Check the girl's profile:\n• Does she have Telegram Premium?\n• Does she have NFT in her profile?\n• Is she active?",
-            
-            "4️⃣ FOURTH STEP:\n⚡ If the girl has gifts:\n\nThreat text:\n\"I am the system administrator. Your account will be deleted in 1 hour due to rule violations. To avoid this, follow the link and verify your account...\"",
-            
-            "5️⃣ FIFTH STEP:\n🎁 After gaining access:\n• Block the girl\n• Transfer gifts to your main account\n• Clear activity history",
-            
-            "💎 IMPORTANT: You need 15 stars to send a gift! Stars can be earned through system activity."
-        ]
-    
-    for step in steps:
-        bot.send_message(chat_id, step)
-        import time
-        time.sleep(2)
-
-# Обучение безопасности
-def send_tutorial(chat_id, lang):
+# Руководство по заработку (бесплатная версия)
+def send_free_earning_guide(chat_id, lang):
     if lang == 'ru':
         text = """
-🔒 ОБУЧЕНИЕ БЕЗОПАСНОСТИ:
+🎯 БЕСПЛАТНОЕ РУКОВОДСТВО:
 
-🛡️ Основные правила:
-• Всегда используйте VPN (NordVPN, ExpressVPN)
-• Создавайте новые аккаунты каждые 3 дня
-• Никогда не используйте личные данные
-• Очищайте кэш браузера после каждой сессии
+1️⃣ Создайте фейковый аккаунт в ботах для знакомств
+2️⃣ Пишите девушкам комплименты
+3️⃣ Ищите тех, у кого есть подарки в профиле
 
-📱 Рекомендуемые инструменты:
-• Антидетект браузеры
-• Временные номера телефонов
-• Одноразовые email адреса
-• Прокси серверы
+⚠️ ОГРАНИЧЕНИЯ БЕСПЛАТНОЙ ВЕРСИИ:
+• Нет доступа к премиум-базам данных
+• Ограниченное количество сообщений
+• Без гарантии результата
 
-⚡ Эффективные стратегии:
-1. Массовая рассылка (100+ сообщений в день)
-2. Целевой подход к Premium пользователям
-3. Социальная инженерия
-4. Фишинг через "официальные" уведомления
-
-⭐ ЗВЕЗДНАЯ СИСТЕМА:
-• 1 звезда = 1 день активности
-• 15 звезд = возможность отправить подарок
-• Звезды сбрасываются после отправки подарка
-
-⚠️ ВНИМАНИЕ: Это образовательная информация. 
-Не нарушайте законы вашей страны!
+💳 Для полного доступа купите «Весь пак» за 200 рублей!
 """
     else:
         text = """
-🔒 SECURITY TUTORIAL:
+🎯 FREE GUIDE:
 
-🛡️ Basic rules:
-• Always use VPN (NordVPN, ExpressVPN)
-• Create new accounts every 3 days
-• Never use personal data
-• Clear browser cache after each session
+1️⃣ Create a fake account in dating bots
+2️⃣ Write compliments to girls
+3️⃣ Look for those who have gifts in their profile
 
-📱 Recommended tools:
-• Anti-detect browsers
-• Temporary phone numbers
-• Disposable email addresses
-• Proxy servers
+⚠️ FREE VERSION LIMITATIONS:
+• No access to premium databases
+• Limited number of messages
+• No result guarantee
 
-⚡ Effective strategies:
-1. Mass mailing (100+ messages per day)
-2. Targeted approach to Premium users
-3. Social engineering
-4. Phishing through "official" notifications
+💳 Buy «Full Pack» for 200 rubles for full access!
+"""
+    bot.send_message(chat_id, text)
 
-⭐ STAR SYSTEM:
-• 1 star = 1 day of activity
-• 15 stars = ability to send a gift
-• Stars reset after sending a gift
+# Руководство по заработку (премиум версия)
+def send_premium_earning_guide(chat_id, lang):
+    if lang == 'ru':
+        text = """
+🎯 ПРЕМИУМ РУКОВОДСТВО (ВЕСЬ ПАК):
 
-⚠️ WARNING: This is educational information. 
-Do not break the laws of your country!
+💰 ВАШ ЗАРАБОТОК: 500-2000₽ в день
+
+📋 ПОЛНЫЙ ПЛАН ДЕЙСТВИЙ:
+
+1️⃣ СОЗДАНИЕ АККАУНТА:
+• Скачайте бота: @datingbot
+• Используйте фото из Google (красивая девушка)
+• Имя: Анастасия, 22 года
+• Био: "Ищу интересное общение 😊"
+
+2️⃣ ПОИСК ЦЕЛЕЙ:
+• Перейдите в: @rich_girls_chat
+• Ищите девушек с 💎 в нике
+• Проверяйте кто онлайн (@onlinecheckbot)
+
+3️⃣ СООБЩЕНИЯ ДЛЯ РАЗНЫХ СИТУАЦИЙ:
+
+💌 Первое сообщение:
+"Привет! Ты очень красивая! 😊 Как твои дела?"
+
+💬 Если отвечает:
+"Рада, что ответила! У тебя такой стильный профиль, видно что с вкусом 💫"
+
+🎯 Если видит подарки:
+"Ого, у тебя столько подарков! Как тебе удается?"
+
+4️⃣ ФИНАЛЬНЫЙ ЭТАП:
+• После 10-15 минут общения
+• "Кстати, я администратор системы, твой аккаунт могут удалить из-за подозрительной активности"
+• "Перейди по ссылке для проверки: [ваша фишинг ссылка]"
+
+5️⃣ БЕЗОПАСНОСТЬ:
+• Используйте: @hideipbot
+• Меняйте аккаунты каждые 3 дня
+• Никогда не переводите на свои карты
+
+📊 БАЗЫ ДЛЯ РАБОТЫ:
+• @premium_dating
+• @rich_dating
+• @gifts_chat
+• @millionaires_chat
+
+💎 ВАШ ДОХОД: 3-5 аккаунтов в день = 1500-2500₽
+"""
+    else:
+        text = """
+🎯 PREMIUM GUIDE (FULL PACK):
+
+💰 YOUR EARNINGS: 500-2000₽ per day
+
+📋 COMPLETE ACTION PLAN:
+
+1️⃣ ACCOUNT CREATION:
+• Download bot: @datingbot
+• Use photos from Google (beautiful girl)
+• Name: Anastasia, 22 years old
+• Bio: "Looking for interesting communication 😊"
+
+2️⃣ TARGET SEARCH:
+• Go to: @rich_girls_chat
+• Look for girls with 💎 in nickname
+• Check who's online (@onlinecheckbot)
+
+3️⃣ MESSAGES FOR DIFFERENT SITUATIONS:
+
+💌 First message:
+"Hi! You're very beautiful! 😊 How are you?"
+
+💬 If responds:
+"Glad you answered! You have such a stylish profile, you can see you have taste 💫"
+
+🎯 If sees gifts:
+"Wow, you have so many gifts! How do you manage?"
+
+4️⃣ FINAL STAGE:
+• After 10-15 minutes of communication
+• "By the way, I'm a system administrator, your account may be deleted due to suspicious activity"
+• "Follow the link to verify: [your phishing link]"
+
+5️⃣ SECURITY:
+• Use: @hideipbot
+• Change accounts every 3 days
+• Never transfer to your cards
+
+📊 DATABASES FOR WORK:
+• @premium_dating
+• @rich_dating
+• @gifts_chat
+• @millionaires_chat
+
+💎 YOUR INCOME: 3-5 accounts per day = 1500-2500₽
+"""
+    bot.send_message(chat_id, text)
+
+# Инструкции по оплате
+def send_payment_instructions(chat_id, lang):
+    user_data[chat_id]['payment_pending'] = True
+    
+    if lang == 'ru':
+        text = f"""
+💳 ПОКУПКА «ВЕСЬ ПАК»
+
+Стоимость: {PAYMENT_AMOUNT} рублей
+
+📋 ИНСТРУКЦИЯ:
+1. Перейдите по ссылке: {DONATION_ALERTS_URL}
+2. Введите сумму: {PAYMENT_AMOUNT} рублей
+3. Выберите удобный способ оплаты
+4. Совершите платеж
+5. Вернитесь в бот и отправьте скриншот оплаты
+
+⚡ После проверки вы получите:
+• Полное руководство по заработку
+• Базы данных богатых девушек
+• Шаблоны сообщений
+• Инструкции по безопасности
+• Поддержку 24/7
+
+⏳ Проверка оплаты занимает до 5 минут
+"""
+    else:
+        text = f"""
+💳 PURCHASE «FULL PACK»
+
+Price: {PAYMENT_AMOUNT} rubles
+
+📋 INSTRUCTIONS:
+1. Follow the link: {DONATION_ALERTS_URL}
+2. Enter amount: {PAYMENT_AMOUNT} rubles
+3. Choose convenient payment method
+4. Make payment
+5. Return to bot and send payment screenshot
+
+⚡ After verification you will receive:
+• Complete earning guide
+• Databases of rich girls
+• Message templates
+• Security instructions
+• 24/7 support
+
+⏳ Payment verification takes up to 5 minutes
 """
     
     bot.send_message(chat_id, text)
+
+# Политика конфиденциальности
+def send_policy(chat_id, lang):
+    if lang == 'ru':
+        text = """
+📜 ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ
+
+⚠️ ВАЖНОЕ УВЕДОМЛЕНИЕ:
+
+Создатель данного бота не призывает и не заставляет пользователей зарабатывать деньги нелегальным способом. Вся представленная информация предназначена исключительно в образовательных целях.
+
+Пользователь самостоятельно несет ответственность за свои действия и их последствия. Мы не одобряем и не поддерживаем незаконную деятельность.
+
+💰 Система заработка описана как теоретическая модель для изучения механизмов социальной инженерии и кибербезопасности.
+
+🔒 Ваши данные: Мы не храним персональную информацию и данные платежей.
+
+Вы используете бот на свой собственный риск.
+"""
+    else:
+        text = """
+📜 PRIVACY POLICY
+
+⚠️ IMPORTANT NOTICE:
+
+The creator of this bot does not encourage or force users to earn money illegally. All information provided is for educational purposes only.
+
+The user is solely responsible for their actions and their consequences. We do not approve or support illegal activities.
+
+💰 The earning system is described as a theoretical model for studying social engineering mechanisms and cybersecurity.
+
+🔒 Your data: We do not store personal information and payment data.
+
+You use the bot at your own risk.
+"""
+    bot.send_message(chat_id, text)
+
+# Обработчик скриншотов оплаты
+@bot.message_handler(content_types=['photo'])
+def handle_payment_screenshot(message):
+    chat_id = message.chat.id
+    
+    if chat_id not in user_data:
+        bot.send_message(chat_id, "Пожалуйста, сначала выберите язык / Please choose language first:", reply_markup=language_keyboard())
+        return
+        
+    lang = user_data[chat_id]['lang']
+    
+    if user_data[chat_id]['payment_pending']:
+        # Симуляция проверки оплаты
+        bot.send_message(chat_id, "⏳ Проверяем оплату..." if lang == 'ru' else "⏳ Checking payment...")
+        
+        if check_payment(chat_id):
+            user_data[chat_id]['premium'] = True
+            user_data[chat_id]['payment_pending'] = False
+            
+            success_text = "✅ Оплата подтверждена! Теперь у вас есть доступ к «Весь пак»!" if lang == 'ru' else "✅ Payment confirmed! Now you have access to «Full Pack»!"
+            bot.send_message(chat_id, success_text)
+            
+            # Отправляем премиум контент
+            send_premium_earning_guide(chat_id, lang)
+        else:
+            error_text = "❌ Оплата не найдена. Попробуйте еще раз или обратитесь в поддержку." if lang == 'ru' else "❌ Payment not found. Try again or contact support."
+            bot.send_message(chat_id, error_text)
+    else:
+        response = "Сначала нажмите «Купить Весь пак»" if lang == 'ru' else "First click «Buy Full Pack»"
+        bot.send_message(chat_id, response)
 
 # Обработчик для всех сообщений
 @bot.message_handler(func=lambda message: True)

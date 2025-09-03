@@ -5,7 +5,7 @@ import threading
 import os
 
 # Токен бота
-API_TOKEN = '8223792131:AAHdBBK4NRHF_rfYmxOz5mEHkLJKQh_2r-M'
+API_TOKEN = '8214260739:AAEfatPbnC7ZpcO2LckO7QM10EbgvGxemO0'
 
 # Создаем экземпляр бота
 bot = telebot.TeleBot(API_TOKEN)
@@ -75,4 +75,5 @@ if __name__ == "__main__":
     
     # Запускаем Flask
     port = int(os.environ.get("PORT", 5000))
+
     app.run(host='0.0.0.0', port=port, debug=False)

@@ -21,7 +21,8 @@ user_data = {}
 ADMIN_TG = "xricexx"
 DATING_BOT_LINK = "https://t.me/divingbot"
 DONATION_ALERTS_URL = "https://www.donationalerts.com/r/lites_man"
-PAYMENT_AMOUNT = 200
+PAYMENT_AMOUNT_RUB = 200
+PAYMENT_AMOUNT_USD = 5  # Примерно 200 рублей в долларах
 
 # Клавиатура выбора языка
 def language_keyboard():
@@ -104,7 +105,7 @@ def handle_main_menu(message):
 # Руководство по заработку (бесплатная версия) - ОЧЕНЬ ПОДРОБНОЕ
 def send_free_earning_guide(chat_id, lang):
     if lang == 'ru':
-        # Отправляем руководство частями
+        # Русская версия (оставляем как было)
         parts = [
             """
 🎯 БЕСПЛАТНОЕ РУКОВОДСТВО ПО ЗАРАБОТКУ NFT/TELEGRAM ПОДАРКОВ
@@ -171,7 +172,7 @@ def send_free_earning_guide(chat_id, lang):
 • Не торопите события
 • Используйте комплименты уместно
 
-💬 ЭТАПЫ ОБЩЕНИЯ:
+💬 ЭТАПЫ ОБЩЕНИА:
 1. Знакомство (первые 5 сообщений)
 2. Установление контакта (15-20 сообщений)
 3. Создание доверия (30-60 минут общения)
@@ -202,7 +203,7 @@ def send_free_earning_guide(chat_id, lang):
 "С удовольствием, но сначала хочу получше узнать тебя здесь. Расскажи о своих мечтах!"
 """,
             """
-5️⃣ БЕЗОПАСНОСТЬ И АНОНИМНОСТЬ
+5️⃣ БЕЗОПАСНОСТЬ И АНОНИМНОСТИ
 
 🛡️ ОСНОВНЫЕ ПРАВИЛА:
 • Никогда не используйте личные данные
@@ -228,7 +229,7 @@ def send_free_earning_guide(chat_id, lang):
 🚫 ЧЕГО НЕТ В БЕСПЛАТНОЙ ВЕРСИИ:
 • Доступа к закрытым базам данных
 • Автоматического поиска целей
-• Готовых фишинг-сслылок
+• Готовых фишинг-ссылок
 • Шаблонов для угроз и давления
 • Инструкций по выводу средств
 • Поддержки 24/7
@@ -255,7 +256,7 @@ def send_free_earning_guide(chat_id, lang):
         final_text = f"""
 🔥 ВАЖНО: Бесплатная версия подходит только для обучения основам!
 
-💳 Для реального заработка необходим «Весь пак» за {PAYMENT_AMOUNT} рублей
+💳 Для реального заработка необходим «Весь пак» за {PAYMENT_AMOUNT_RUB} рублей
 
 ⚡ В премиум версии:
 • Пошаговые видео инструкции
@@ -269,7 +270,7 @@ def send_free_earning_guide(chat_id, lang):
         bot.send_message(chat_id, final_text)
         
     else:
-        # English version
+        # English version - ПОЛНАЯ ВЕРСИЯ
         parts = [
             """
 🎯 FREE GUIDE TO EARN NFT/TELEGRAM GIFTS
@@ -288,8 +289,8 @@ def send_free_earning_guide(chat_id, lang):
 🌟 IMPORTANT: The account should look as natural as possible!
 
 📝 ACCOUNT DATA:
-• Name: Maxim, 24 years old
-• City: Moscow/St. Petersburg
+• Name: Alex, 25 years old
+• City: New York/London
 • Profession: Entrepreneur/IT specialist
 • Interests: Travel, sports, art
 
@@ -304,6 +305,117 @@ def send_free_earning_guide(chat_id, lang):
 • Add virtual phone number
 • Set up profile privacy
 • Fill in all bio fields
+
+🔧 RECOMMENDED TOOLS:
+• Temp-mail.org for email
+• TextNow for virtual number
+• Google Images for photos
+""",
+            """
+2️⃣ FINDING TARGETS FOR EARNINGS
+
+🎯 TARGET GIRLS CRITERIA:
+• Telegram Premium (star in profile)
+• NFT in avatar or username
+• Expensive gifts in profile
+• Activity in premium chats
+• Beautiful photos in profile
+
+🔍 WHERE TO SEARCH:
+• Dating chats with Premium filter
+• NFT thematic groups
+• Chats with expensive gifts
+• Interest groups (travel, luxury)
+
+📊 SEARCH PRIORITIES:
+1. Girls with 10+ gifts
+2. Active in last 24 hours
+3. With open profile
+4. From big cities
+""",
+            """
+3️⃣ PSYCHOLOGY OF COMMUNICATION WITH GIRLS
+
+🧠 BASIC PRINCIPLES:
+• Create emotional connection
+• Show genuine interest
+• Don't rush events
+• Use compliments appropriately
+
+💬 COMMUNICATION STAGES:
+1. Introduction (first 5 messages)
+2. Contact establishment (15-20 messages)
+3. Trust building (30-60 minutes communication)
+4. Final stage (transition to "problem")
+
+😊 EMOTIONAL TRIGGERS:
+• Flattery (appearance compliments)
+• Interest in personality (hobby questions)
+• Common topics (travel, music)
+• Humor (light jokes)
+""",
+            """
+4️⃣ MESSAGE TEMPLATES FOR DIFFERENT SITUATIONS
+
+💌 FIRST MESSAGE:
+"Hi! Your smile in the photo is just mesmerizing! 😊 How's your day going?"
+
+💬 ANSWER TO "WHAT DO YOU DO?":
+"I work on IT projects, creating my startups. What are you passionate about? I can see you have great taste!"
+
+🎯 IF YOU SEE GIFTS:
+"Wow, you have so many cool gifts! You must have many admirers) How do you choose who to answer?"
+
+🔄 IF GIRL WRITES LITTLE:
+"Seems like you're busy today) Maybe we continue in the evening? I want to know more about you!"
+
+❓ IF ASKS ABOUT MEETING:
+"With pleasure, but first I want to get to know you better here. Tell me about your dreams!"
+""",
+            """
+5️⃣ SECURITY AND ANONYMITY
+
+🛡️ BASIC RULES:
+• Never use personal data
+• Change accounts every 3-4 days
+• Use different photos for each account
+• Clear cache after each session
+
+🔧 SECURITY TOOLS:
+• VPN (NordVPN, ExpressVPN)
+• Anti-detect browsers
+• Temporary phone numbers
+• Virtual cards
+
+⚠️ RED FLAGS:
+• Girls ask for video call immediately
+• Suspicious questions about work
+• Requests to switch to other messengers
+• Aggressive behavior
+""",
+            """
+6️⃣ FREE VERSION LIMITATIONS
+
+🚫 WHAT'S NOT IN FREE VERSION:
+• Access to closed databases
+• Automatic target search
+• Ready phishing links
+• Threat and pressure templates
+• Withdrawal instructions
+• 24/7 support
+
+📊 REAL FREE RESULTS:
+• 1-2 successful operations per week
+• Income: $10-20 per week
+• High risk of bans
+• Lots of manual work
+
+💎 WHAT PREMIUM "FULL PACK" GIVES:
+• Income: $30-50 per DAY
+• Automated search
+• Ready working systems
+• Complete security
+• Support and training
 """
         ]
         
@@ -312,9 +424,16 @@ def send_free_earning_guide(chat_id, lang):
             time.sleep(3)
             
         final_text = f"""
-💡 This is just the beginning of the free guide!
+🔥 IMPORTANT: Free version is only for learning basics!
 
-💳 For the complete guide in English, purchase «Full Pack» for {PAYMENT_AMOUNT} rubles
+💳 For real earnings you need «Full Pack» for ${PAYMENT_AMOUNT_USD}
+
+⚡ In premium version:
+• Step-by-step video instructions
+• Ready communication scripts
+• Automatic templates
+• Closed databases
+• Technical support
 
 📞 After payment write to admin: @{ADMIN_TG}
 """
@@ -378,14 +497,14 @@ def send_premium_earning_guide(chat_id, lang):
         text = f"""
 🎯 PREMIUM GUIDE (FULL PACK):
 
-💰 YOUR EARNINGS: 500-2000₽ per day
+💰 YOUR EARNINGS: $30-50 per day
 
 📋 COMPLETE ACTION PLAN:
 
 1️⃣ ACCOUNT CREATION:
 • Go to: {DATING_BOT_LINK}
 • Use guy photos from Google (handsome man)
-• Name: Maxim, 24 years old
+• Name: Alex, 25 years old
 • Bio: "Looking for serious relationship 💍"
 
 2️⃣ TARGET SEARCH:
@@ -422,7 +541,7 @@ def send_premium_earning_guide(chat_id, lang):
 • @gifts_collection
 • @millionaires_dating
 
-💎 YOUR INCOME: 3-5 girls per day = 1500-2500₽
+💎 YOUR INCOME: 3-5 girls per day = $40-70
 
 📞 Support: @{ADMIN_TG}
 """
@@ -436,11 +555,11 @@ def send_payment_instructions(chat_id, lang):
         text = f"""
 💳 ПОКУПКА «ВЕСЬ ПАК»
 
-Стоимость: {PAYMENT_AMOUNT} рублей
+Стоимость: {PAYMENT_AMOUNT_RUB} рублей
 
 📋 ИНСТРУКЦИЯ:
 1. Перейдите по ссылке: {DONATION_ALERTS_URL}
-2. Введите сумму: {PAYMENT_AMOUNT} рублей
+2. Введите сумму: {PAYMENT_AMOUNT_RUB} рублей
 3. Выберите удобный способ оплаты
 4. Совершите платеж
 5. Напишите админу: @{ADMIN_TG}
@@ -458,11 +577,11 @@ def send_payment_instructions(chat_id, lang):
         text = f"""
 💳 PURCHASE «FULL PACK»
 
-Price: {PAYMENT_AMOUNT} rubles
+Price: ${PAYMENT_AMOUNT_USD}
 
 📋 INSTRUCTIONS:
 1. Follow the link: {DONATION_ALERTS_URL}
-2. Enter amount: {PAYMENT_AMOUNT} rubles
+2. Enter amount: {PAYMENT_AMOUNT_RUB} rubles (approx ${PAYMENT_AMOUNT_USD})
 3. Choose convenient payment method
 4. Make payment
 5. Write to admin: @{ADMIN_TG}

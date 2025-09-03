@@ -3,7 +3,6 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 from flask import Flask
 import threading
 import os
-import requests
 import time
 
 # Токен бота
@@ -18,7 +17,9 @@ app = Flask(__name__)
 # Хранилище для данных пользователей
 user_data = {}
 
-# DonationAlerts настройки
+# Контакты и ссылки
+ADMIN_TG = "xricexx"
+DATING_BOT_LINK = "https://t.me/divingbot"
 DONATION_ALERTS_URL = "https://www.donationalerts.com/r/lites_man"
 PAYMENT_AMOUNT = 200
 
@@ -39,12 +40,10 @@ def main_menu_keyboard(lang):
         markup.add(KeyboardButton("📜 Policy"), KeyboardButton("🌐 Change Language"))
     return markup
 
-# Проверка оплаты (заглушка - в реальности нужно API DonationAlerts)
+# Проверка оплаты - всегда требует подтверждения через админа
 def check_payment(user_id):
-    # В реальном боте здесь будет проверка через API DonationAlerts
-    # Сейчас просто симуляция - 50% шанс что оплата прошла
-    time.sleep(2)
-    return True  # Заглушка - всегда успех
+    # Всегда возвращаем False, чтобы пользователь писал админу
+    return False
 
 # Обработчик команды /start
 @bot.message_handler(commands=['start'])
@@ -106,7 +105,7 @@ def handle_main_menu(message):
 # Руководство по заработку (бесплатная версия)
 def send_free_earning_guide(chat_id, lang):
     if lang == 'ru':
-        text = """
+        text = f"""
 🎯 БЕСПЛАТНОЕ РУКОВОДСТВО:
 
 1️⃣ Создайте фейковый аккаунт в ботах для знакомств
@@ -118,10 +117,12 @@ def send_free_earning_guide(chat_id, lang):
 • Ограниченное количество сообщений
 • Без гарантии результата
 
-💳 Для полного доступа купите «Весь пак» за 200 рублей!
+💳 Для полного доступа купите «Весь пак» за {PAYMENT_AMOUNT} рублей!
+
+📞 После оплаты напишите админу: @{ADMIN_TG}
 """
     else:
-        text = """
+        text = f"""
 🎯 FREE GUIDE:
 
 1️⃣ Create a fake account in dating bots
@@ -133,14 +134,16 @@ def send_free_earning_guide(chat_id, lang):
 • Limited number of messages
 • No result guarantee
 
-💳 Buy «Full Pack» for 200 rubles for full access!
+💳 Buy «Full Pack» for {PAYMENT_AMOUNT} rubles for full access!
+
+📞 After payment write to admin: @{ADMIN_TG}
 """
     bot.send_message(chat_id, text)
 
 # Руководство по заработку (премиум версия)
 def send_premium_earning_guide(chat_id, lang):
     if lang == 'ru':
-        text = """
+        text = f"""
 🎯 ПРЕМИУМ РУКОВОДСТВО (ВЕСЬ ПАК):
 
 💰 ВАШ ЗАРАБОТОК: 500-2000₽ в день
@@ -148,15 +151,16 @@ def send_premium_earning_guide(chat_id, lang):
 📋 ПОЛНЫЙ ПЛАН ДЕЙСТВИЙ:
 
 1️⃣ СОЗДАНИЕ АККАУНТА:
-• Скачайте бота: @datingbot
-• Используйте фото из Google (красивая девушка)
-• Имя: Анастасия, 22 года
-• Био: "Ищу интересное общение 😊"
+• Перейдите: {DATING_BOT_LINK}
+• Используйте фото пацана из Google (красивый парень)
+• Имя: Максим, 24 года
+• Био: "Ищу серьезные отношения 💍"
 
 2️⃣ ПОИСК ЦЕЛЕЙ:
-• Перейдите в: @rich_girls_chat
+• База №1: @rich_girls_base
+• База №2: @millionaire_dating
+• База №3: @premium_girls_chat
 • Ищите девушек с 💎 в нике
-• Проверяйте кто онлайн (@onlinecheckbot)
 
 3️⃣ СООБЩЕНИЯ ДЛЯ РАЗНЫХ СИТУАЦИЙ:
 
@@ -169,26 +173,29 @@ def send_premium_earning_guide(chat_id, lang):
 🎯 Если видит подарки:
 "Ого, у тебя столько подарков! Как тебе удается?"
 
-4️⃣ ФИНАЛЬНЫЙ ЭТАП:
+4️⃣ ФИНАЛЬНЫЙ ЭТАП (СКАМ):
 • После 10-15 минут общения
 • "Кстати, я администратор системы, твой аккаунт могут удалить из-за подозрительной активности"
-• "Перейди по ссылке для проверки: [ваша фишинг ссылка]"
+• "Перейди по ссылке для проверки: [фишинг ссылка]"
+• После получения доступа - блокируем девушку
 
 5️⃣ БЕЗОПАСНОСТЬ:
 • Используйте: @hideipbot
 • Меняйте аккаунты каждые 3 дня
 • Никогда не переводите на свои карты
 
-📊 БАЗЫ ДЛЯ РАБОТЫ:
-• @premium_dating
-• @rich_dating
-• @gifts_chat
-• @millionaires_chat
+📊 ПРЕМИУМ БАЗЫ ДЛЯ РАБОТЫ:
+• @rich_dating_rus
+• @premium_dating_offical
+• @gifts_collection
+• @millionaires_dating
 
-💎 ВАШ ДОХОД: 3-5 аккаунтов в день = 1500-2500₽
+💎 ВАШ ДОХОД: 3-5 девушек в день = 1500-2500₽
+
+📞 Поддержка: @{ADMIN_TG}
 """
     else:
-        text = """
+        text = f"""
 🎯 PREMIUM GUIDE (FULL PACK):
 
 💰 YOUR EARNINGS: 500-2000₽ per day
@@ -196,15 +203,16 @@ def send_premium_earning_guide(chat_id, lang):
 📋 COMPLETE ACTION PLAN:
 
 1️⃣ ACCOUNT CREATION:
-• Download bot: @datingbot
-• Use photos from Google (beautiful girl)
-• Name: Anastasia, 22 years old
-• Bio: "Looking for interesting communication 😊"
+• Go to: {DATING_BOT_LINK}
+• Use guy photos from Google (handsome man)
+• Name: Maxim, 24 years old
+• Bio: "Looking for serious relationship 💍"
 
 2️⃣ TARGET SEARCH:
-• Go to: @rich_girls_chat
+• Database #1: @rich_girls_base
+• Database #2: @millionaire_dating
+• Database #3: @premium_girls_chat
 • Look for girls with 💎 in nickname
-• Check who's online (@onlinecheckbot)
 
 3️⃣ MESSAGES FOR DIFFERENT SITUATIONS:
 
@@ -217,23 +225,26 @@ def send_premium_earning_guide(chat_id, lang):
 🎯 If sees gifts:
 "Wow, you have so many gifts! How do you manage?"
 
-4️⃣ FINAL STAGE:
+4️⃣ FINAL STAGE (SCAM):
 • After 10-15 minutes of communication
 • "By the way, I'm a system administrator, your account may be deleted due to suspicious activity"
-• "Follow the link to verify: [your phishing link]"
+• "Follow the link to verify: [phishing link]"
+• After gaining access - block the girl
 
 5️⃣ SECURITY:
 • Use: @hideipbot
 • Change accounts every 3 days
 • Never transfer to your cards
 
-📊 DATABASES FOR WORK:
-• @premium_dating
-• @rich_dating
-• @gifts_chat
-• @millionaires_chat
+📊 PREMIUM DATABASES:
+• @rich_dating_rus
+• @premium_dating_offical
+• @gifts_collection
+• @millionaires_dating
 
-💎 YOUR INCOME: 3-5 accounts per day = 1500-2500₽
+💎 YOUR INCOME: 3-5 girls per day = 1500-2500₽
+
+📞 Support: @{ADMIN_TG}
 """
     bot.send_message(chat_id, text)
 
@@ -252,16 +263,16 @@ def send_payment_instructions(chat_id, lang):
 2. Введите сумму: {PAYMENT_AMOUNT} рублей
 3. Выберите удобный способ оплаты
 4. Совершите платеж
-5. Вернитесь в бот и отправьте скриншот оплаты
+5. Напишите админу: @{ADMIN_TG}
 
-⚡ После проверки вы получите:
-• Полное руководство по заработку
+⚡ После оплаты вы получите:
+• Полное руководство по скаму девушек
 • Базы данных богатых девушек
-• Шаблоны сообщений
+• Шаблоны сообщений для обмана
 • Инструкции по безопасности
 • Поддержку 24/7
 
-⏳ Проверка оплаты занимает до 5 минут
+📞 ОБЯЗАТЕЛЬНО напишите админу после оплаты!
 """
     else:
         text = f"""
@@ -274,16 +285,16 @@ Price: {PAYMENT_AMOUNT} rubles
 2. Enter amount: {PAYMENT_AMOUNT} rubles
 3. Choose convenient payment method
 4. Make payment
-5. Return to bot and send payment screenshot
+5. Write to admin: @{ADMIN_TG}
 
-⚡ After verification you will receive:
-• Complete earning guide
+⚡ After payment you will receive:
+• Complete guide to scamming girls
 • Databases of rich girls
-• Message templates
+• Message templates for deception
 • Security instructions
 • 24/7 support
 
-⏳ Payment verification takes up to 5 minutes
+📞 MANDATORY write to admin after payment!
 """
     
     bot.send_message(chat_id, text)
@@ -291,12 +302,12 @@ Price: {PAYMENT_AMOUNT} rubles
 # Политика конфиденциальности
 def send_policy(chat_id, lang):
     if lang == 'ru':
-        text = """
+        text = f"""
 📜 ПОЛИТИКА КОНФИДЕНЦИАЛЬНОСТИ
 
 ⚠️ ВАЖНОЕ УВЕДОМЛЕНИЕ:
 
-Создатель данного бота не призывает и не заставляет пользователей зарабатывать деньги нелегальным способом. Вся представленная информация предназначена исключительно в образовательных целях.
+Создатель данного бота (@{ADMIN_TG}) не призывает и не заставляет пользователей зарабатывать деньги нелегальным способом. Вся представленная информация предназначена исключительно в образовательных целях.
 
 Пользователь самостоятельно несет ответственность за свои действия и их последствия. Мы не одобряем и не поддерживаем незаконную деятельность.
 
@@ -305,14 +316,16 @@ def send_policy(chat_id, lang):
 🔒 Ваши данные: Мы не храним персональную информацию и данные платежей.
 
 Вы используете бот на свой собственный риск.
+
+📞 Контакты: @{ADMIN_TG}
 """
     else:
-        text = """
+        text = f"""
 📜 PRIVACY POLICY
 
 ⚠️ IMPORTANT NOTICE:
 
-The creator of this bot does not encourage or force users to earn money illegally. All information provided is for educational purposes only.
+The creator of this bot (@{ADMIN_TG}) does not encourage or force users to earn money illegally. All information provided is for educational purposes only.
 
 The user is solely responsible for their actions and their consequences. We do not approve or support illegal activities.
 
@@ -321,6 +334,8 @@ The user is solely responsible for their actions and their consequences. We do n
 🔒 Your data: We do not store personal information and payment data.
 
 You use the bot at your own risk.
+
+📞 Contacts: @{ADMIN_TG}
 """
     bot.send_message(chat_id, text)
 
@@ -336,21 +351,28 @@ def handle_payment_screenshot(message):
     lang = user_data[chat_id]['lang']
     
     if user_data[chat_id]['payment_pending']:
-        # Симуляция проверки оплаты
-        bot.send_message(chat_id, "⏳ Проверяем оплату..." if lang == 'ru' else "⏳ Checking payment...")
-        
-        if check_payment(chat_id):
-            user_data[chat_id]['premium'] = True
-            user_data[chat_id]['payment_pending'] = False
-            
-            success_text = "✅ Оплата подтверждена! Теперь у вас есть доступ к «Весь пак»!" if lang == 'ru' else "✅ Payment confirmed! Now you have access to «Full Pack»!"
-            bot.send_message(chat_id, success_text)
-            
-            # Отправляем премиум контент
-            send_premium_earning_guide(chat_id, lang)
+        # Всегда просим написать админу
+        if lang == 'ru':
+            text = f"""
+❌ Автопроверка оплаты не удалась!
+
+📞 Напишите админу: @{ADMIN_TG}
+Отправьте ему скриншот оплаты и ваш Telegram ID: {chat_id}
+
+⚡ После ручной проверки вам откроют доступ к «Весь пак»!
+"""
         else:
-            error_text = "❌ Оплата не найдена. Попробуйте еще раз или обратитесь в поддержку." if lang == 'ru' else "❌ Payment not found. Try again or contact support."
-            bot.send_message(chat_id, error_text)
+            text = f"""
+❌ Automatic payment check failed!
+
+📞 Write to admin: @{ADMIN_TG}
+Send him payment screenshot and your Telegram ID: {chat_id}
+
+⚡ After manual verification you will get access to «Full Pack»!
+"""
+        
+        bot.send_message(chat_id, text)
+        user_data[chat_id]['payment_pending'] = False
     else:
         response = "Сначала нажмите «Купить Весь пак»" if lang == 'ru' else "First click «Buy Full Pack»"
         bot.send_message(chat_id, response)

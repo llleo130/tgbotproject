@@ -1,5 +1,5 @@
 import telebot
-from telebot.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 from flask import Flask
 import threading
 import os
@@ -22,25 +22,14 @@ def language_keyboard():
     markup.add(KeyboardButton("🇷🇺 Русский"), KeyboardButton("🇬🇧 English"))
     return markup
 
-# Клавиатура выбора метода заработка
-def earning_method_keyboard(lang):
-    markup = ReplyKeyboardMarkup(resize_keyboard=True)
-    if lang == 'ru':
-        markup.add(KeyboardButton("🎁 NFT подарки"), KeyboardButton("💎 Telegram подарки"))
-        markup.add(KeyboardButton("🔙 Назад"))
-    else:
-        markup.add(KeyboardButton("🎁 NFT Gifts"), KeyboardButton("💎 Telegram Gifts"))
-        markup.add(KeyboardButton("🔙 Back"))
-    return markup
-
 # Клавиатура главного меню
 def main_menu_keyboard(lang):
     markup = ReplyKeyboardMarkup(resize_keyboard=True)
     if lang == 'ru':
-        markup.add(KeyboardButton("💰 Заработок"), KeyboardButton("📊 Статистика"))
+        markup.add(KeyboardButton("💰 Заработать"), KeyboardButton("⭐ Мои звезды"))
         markup.add(KeyboardButton("🎓 Обучение"), KeyboardButton("🌐 Сменить язык"))
     else:
-        markup.add(KeyboardButton("💰 Earn Money"), KeyboardButton("📊 Statistics"))
+        markup.add(KeyboardButton("💰 Earn Money"), KeyboardButton("⭐ My Stars"))
         markup.add(KeyboardButton("🎓 Tutorial"), KeyboardButton("🌐 Change Language"))
     return markup
 
@@ -48,8 +37,8 @@ def main_menu_keyboard(lang):
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     welcome_text = """
-Привет! Добро пожаловать! 🇷🇺🇬🇧
-Hello! Welcome! 🇬🇧🇷🇺
+Привет! Добро пожаловать в систему заработка! 🇷🇺🇬🇧
+Hello! Welcome to the earning system! 🇬🇧🇷🇺
 
 Пожалуйста, выберите язык / Please choose your language:
 """
@@ -61,32 +50,38 @@ def handle_language_choice(message):
     chat_id = message.chat.id
     
     if message.text == "🇷🇺 Русский":
-        user_data[chat_id] = {'lang': 'ru', 'balance': 0}
-        response = "Отлично! Вы выбрали русский язык. 🇷🇺\n\nВыберите действие:"
+        user_data[chat_id] = {'lang': 'ru', 'stars': 0, 'balance': 0}
+        response = "✅ Отлично! Вы выбрали русский язык.\n\nВыберите действие:"
         markup = main_menu_keyboard('ru')
     else:
-        user_data[chat_id] = {'lang': 'en', 'balance': 0}
-        response = "Great! You've chosen English. 🇬🇧\n\nChoose action:"
+        user_data[chat_id] = {'lang': 'en', 'stars': 0, 'balance': 0}
+        response = "✅ Great! You've chosen English.\n\nChoose action:"
         markup = main_menu_keyboard('en')
     
     bot.send_message(chat_id, response, reply_markup=markup)
 
 # Обработчик главного меню
 @bot.message_handler(func=lambda message: message.text in [
-    "💰 Заработок", "📊 Статистика", "🎓 Обучение", "🌐 Сменить язык",
-    "💰 Earn Money", "📊 Statistics", "🎓 Tutorial", "🌐 Change Language"
+    "💰 Заработать", "⭐ Мои звезды", "🎓 Обучение", "🌐 Сменить язык",
+    "💰 Earn Money", "⭐ My Stars", "🎓 Tutorial", "🌐 Change Language"
 ])
 def handle_main_menu(message):
     chat_id = message.chat.id
-    lang = user_data.get(chat_id, {}).get('lang', 'ru')
-    
-    if message.text in ["💰 Заработок", "💰 Earn Money"]:
-        response = "🎯 Выберите метод заработка:" if lang == 'ru' else "🎯 Choose earning method:"
-        bot.send_message(chat_id, response, reply_markup=earning_method_keyboard(lang))
+    if chat_id not in user_data:
+        bot.send_message(chat_id, "Пожалуйста, выберите язык / Please choose language:", reply_markup=language_keyboard())
+        return
         
-    elif message.text in ["📊 Статистика", "📊 Statistics"]:
-        balance = user_data.get(chat_id, {}).get('balance', 0)
-        response = f"📊 Ваш баланс: {balance}₽" if lang == 'ru' else f"📊 Your balance: ${balance}"
+    lang = user_data[chat_id]['lang']
+    
+    if message.text in ["💰 Заработать", "💰 Earn Money"]:
+        send_earning_guide(chat_id, lang)
+        
+    elif message.text in ["⭐ Мои звезды", "⭐ My Stars"]:
+        stars = user_data[chat_id]['stars']
+        if lang == 'ru':
+            response = f"⭐ У вас {stars} звезд\n\nДля отправки подарка нужно 15 звезд 💎"
+        else:
+            response = f"⭐ You have {stars} stars\n\nYou need 15 stars to send a gift 💎"
         bot.send_message(chat_id, response)
         
     elif message.text in ["🎓 Обучение", "🎓 Tutorial"]:
@@ -96,46 +91,37 @@ def handle_main_menu(message):
         response = "Выберите язык:" if lang == 'ru' else "Choose language:"
         bot.send_message(chat_id, response, reply_markup=language_keyboard())
 
-# Обработчик методов заработка
-@bot.message_handler(func=lambda message: message.text in [
-    "🎁 NFT подарки", "💎 Telegram подарки", "🔙 Назад",
-    "🎁 NFT Gifts", "💎 Telegram Gifts", "🔙 Back"
-])
-def handle_earning_methods(message):
-    chat_id = message.chat.id
-    lang = user_data.get(chat_id, {}).get('lang', 'ru')
-    
-    if message.text in ["🔙 Назад", "🔙 Back"]:
-        response = "Главное меню:" if lang == 'ru' else "Main menu:"
-        bot.send_message(chat_id, response, reply_markup=main_menu_keyboard(lang))
-        
-    elif message.text in ["🎁 NFT подарки", "🎁 NFT Gifts"]:
-        send_nft_tutorial(chat_id, lang)
-        
-    elif message.text in ["💎 Telegram подарки", "💎 Telegram Gifts"]:
-        send_telegram_tutorial(chat_id, lang)
-
-# Обучение NFT
-def send_nft_tutorial(chat_id, lang):
+# Руководство по заработку
+def send_earning_guide(chat_id, lang):
     if lang == 'ru':
         steps = [
-            "🎯 NFT Заработок - Пошаговое руководство:\n\n1️⃣ Первый шаг:",
-            "Зайдите на сайт diving.io и создайте фейковый аккаунт\nИспользуйте временную почту и случайные данные",
-            "2️⃣ Второй шаг:\nНапишите 10-15 девушкам в день с предложением получить NFT подарок\nТекст: 'Привет! Хочешь получить эксклюзивный NFT в подарок? 🎁'",
-            "3️⃣ Третий шаг:\nОбщайтесь 10-15 минут, создайте доверительные отношения",
-            "4️⃣ Четвертый шаг:\nНачните мягко угрожать: 'Если не заберешь подарок в течение часа, аккаунт будет удален системой'",
-            "5️⃣ Пятый шаг:\nКогда они согласятся, направьте их на платформу для 'получения подарка' (на самом деле - фишинг)",
-            "⚠️ ВАЖНО: Используйте VPN и одноразовые аккаунты. Не нарушайте законы!"
+            "🎯 ПОШАГОВОЕ РУКОВОДСТВО ПО ЗАРАБОТКУ:\n\n1️⃣ ПЕРВЫЙ ШАГ:",
+            "📝 Создайте фейковый аккаунт в боте для знакомств:\n• Используйте привлекательное фото\n• Придумайте интересную биографию\n• Укажите случайные данные\n• Используйте временную почту",
+            
+            "2️⃣ ВТОРОЙ ШАГ:\n💌 Напишите 10-15 девушкам в день:\n\nТекст сообщения:\n\"Привет! Ты очень красивая! 😊 Хочешь пообщаться?\"",
+            
+            "3️⃣ ТРЕТИЙ ШАГ:\n🔍 Проверьте профиль девушки:\n• Есть ли у нее Telegram Premium?\n• Есть ли NFT в профиле?\n• Активна ли она?",
+            
+            "4️⃣ ЧЕТВЕРТЫЙ ШАГ:\n⚡ Если у девушки есть подарки:\n\nТекст угрозы:\n\"Я администратор системы. Твой аккаунт будет удален через 1 час из-за нарушения правил. Чтобы избежать этого, перейди по ссылке и подтверди аккаунт...\"",
+            
+            "5️⃣ ПЯТЫЙ ШАГ:\n🎁 После получения доступа:\n• Заблокируйте девушку\n• Переведите подарки на свой основной аккаунт\n• Очистите историю действий",
+            
+            "💎 ВАЖНО: Для отправки подарка нужно 15 звезд! Звезды можно получить за активность в системе."
         ]
     else:
         steps = [
-            "🎯 NFT Earnings - Step by Step Guide:\n\n1️⃣ First step:",
-            "Go to diving.io and create a fake account\nUse temporary email and random data",
-            "2️⃣ Second step:\nWrite to 10-15 girls per day offering NFT gift\nText: 'Hi! Want to get an exclusive NFT gift? 🎁'",
-            "3️⃣ Third step:\nChat for 10-15 minutes, build trust relationships",
-            "4️⃣ Fourth step:\nStart soft threats: 'If you don't claim the gift within an hour, your account will be deleted by the system'",
-            "5️⃣ Fifth step:\nWhen they agree, direct them to the 'gift claiming' platform (actually phishing)",
-            "⚠️ IMPORTANT: Use VPN and disposable accounts. Don't break laws!"
+            "🎯 STEP-BY-STEP EARNING GUIDE:\n\n1️⃣ FIRST STEP:",
+            "📝 Create a fake account in a dating bot:\n• Use an attractive photo\n• Create an interesting biography\n• Provide random data\n• Use temporary email",
+            
+            "2️⃣ SECOND STEP:\n💌 Write to 10-15 girls per day:\n\nMessage text:\n\"Hi! You're very beautiful! 😊 Want to chat?\"",
+            
+            "3️⃣ THIRD STEP:\n🔍 Check the girl's profile:\n• Does she have Telegram Premium?\n• Does she have NFT in her profile?\n• Is she active?",
+            
+            "4️⃣ FOURTH STEP:\n⚡ If the girl has gifts:\n\nThreat text:\n\"I am the system administrator. Your account will be deleted in 1 hour due to rule violations. To avoid this, follow the link and verify your account...\"",
+            
+            "5️⃣ FIFTH STEP:\n🎁 After gaining access:\n• Block the girl\n• Transfer gifts to your main account\n• Clear activity history",
+            
+            "💎 IMPORTANT: You need 15 stars to send a gift! Stars can be earned through system activity."
         ]
     
     for step in steps:
@@ -143,83 +129,67 @@ def send_nft_tutorial(chat_id, lang):
         import time
         time.sleep(2)
 
-# Обучение Telegram подаркам
-def send_telegram_tutorial(chat_id, lang):
-    if lang == 'ru':
-        steps = [
-            "💎 Telegram Подарки - Пошаговое руководство:\n\n1️⃣ Первый шаг:",
-            "Создайте привлекательный фейковый аккаунт с красивой аватаркой\nКупите Premium на 1 месяц для доверия",
-            "2️⃣ Второй шаг:\nИщите богатых пользователей в Premium чатах\nПишите: 'Привет! Тебе пришел подарок от Telegram 🎁'",
-            "3️⃣ Третий шаг:\nОбщайтесь 5-10 минут, объясните что они выиграли бонус",
-            "4️⃣ Четвертый шаг:\nСкажите: 'Чтобы получить подарок, нужно подтвердить аккаунт вот по этой ссылке...'",
-            "5️⃣ Пятый шаг:\nИспользуйте фишинг страницу для сбора данных\nПосле получения данных - заблокируйте пользователя",
-            "⚡ СОВЕТ: Меняйте аккаунты каждые 2-3 дня. Используйте разные подходы!"
-        ]
-    else:
-        steps = [
-            "💎 Telegram Gifts - Step by Step Guide:\n\n1️⃣ First step:",
-            "Create attractive fake account with beautiful avatar\nBuy Premium for 1 month for trust",
-            "2️⃣ Second step:\nLook for rich users in Premium chats\nWrite: 'Hi! You received a gift from Telegram 🎁'",
-            "3️⃣ Third step:\nChat for 5-10 minutes, explain they won a bonus",
-            "4️⃣ Fourth step:\nSay: 'To receive the gift, you need to verify your account via this link...'",
-            "5️⃣ Fifth step:\nUse phishing page to collect data\nAfter getting data - block the user",
-            "⚡ TIP: Change accounts every 2-3 days. Use different approaches!"
-        ]
-    
-    for step in steps:
-        bot.send_message(chat_id, step)
-        import time
-        time.sleep(2)
-
-# Общее обучение
+# Обучение безопасности
 def send_tutorial(chat_id, lang):
     if lang == 'ru':
         text = """
-🎓 ПОЛНОЕ ОБУЧЕНИЕ:
+🔒 ОБУЧЕНИЕ БЕЗОПАСНОСТИ:
 
-📌 Основные принципы:
-• Используйте VPN (NordVPN, ExpressVPN)
-• Создавайте фейковые аккаунты
-• Меняйте подходы регулярно
-• Не жадничайте - лучше много мелких жертв
-
-📌 Безопасность:
+🛡️ Основные правила:
+• Всегда используйте VPN (NordVPN, ExpressVPN)
+• Создавайте новые аккаунты каждые 3 дня
 • Никогда не используйте личные данные
-• Очищайте кэш браузера
-• Используйте антидетект браузеры
-• Работайте через прокси
+• Очищайте кэш браузера после каждой сессии
 
-📌 Эффективные методы:
+📱 Рекомендуемые инструменты:
+• Антидетект браузеры
+• Временные номера телефонов
+• Одноразовые email адреса
+• Прокси серверы
+
+⚡ Эффективные стратегии:
 1. Массовая рассылка (100+ сообщений в день)
-2. Целевой подход (богатые пользователи)
+2. Целевой подход к Premium пользователям
 3. Социальная инженерия
-4. Фишинг через 'официальные' предложения
+4. Фишинг через "официальные" уведомления
 
-⚠️ ВНИМАНИЕ: Это образовательная информация. Не нарушайте законы!
+⭐ ЗВЕЗДНАЯ СИСТЕМА:
+• 1 звезда = 1 день активности
+• 15 звезд = возможность отправить подарок
+• Звезды сбрасываются после отправки подарка
+
+⚠️ ВНИМАНИЕ: Это образовательная информация. 
+Не нарушайте законы вашей страны!
 """
     else:
         text = """
-🎓 COMPLETE TUTORIAL:
+🔒 SECURITY TUTORIAL:
 
-📌 Basic principles:
-• Use VPN (NordVPN, ExpressVPN)
-• Create fake accounts
-• Change approaches regularly
-• Don't be greedy - better many small victims
-
-📌 Security:
+🛡️ Basic rules:
+• Always use VPN (NordVPN, ExpressVPN)
+• Create new accounts every 3 days
 • Never use personal data
-• Clear browser cache
-• Use anti-detect browsers
-• Work through proxies
+• Clear browser cache after each session
 
-📌 Effective methods:
+📱 Recommended tools:
+• Anti-detect browsers
+• Temporary phone numbers
+• Disposable email addresses
+• Proxy servers
+
+⚡ Effective strategies:
 1. Mass mailing (100+ messages per day)
-2. Targeted approach (rich users)
+2. Targeted approach to Premium users
 3. Social engineering
-4. Phishing through 'official' offers
+4. Phishing through "official" notifications
 
-⚠️ WARNING: This is educational information. Don't break laws!
+⭐ STAR SYSTEM:
+• 1 star = 1 day of activity
+• 15 stars = ability to send a gift
+• Stars reset after sending a gift
+
+⚠️ WARNING: This is educational information. 
+Do not break the laws of your country!
 """
     
     bot.send_message(chat_id, text)
@@ -230,7 +200,7 @@ def handle_all_messages(message):
     chat_id = message.chat.id
     if chat_id in user_data:
         lang = user_data[chat_id]['lang']
-        response = "Используйте кнопки меню 😊" if lang == 'ru' else "Use menu buttons 😊"
+        response = "Используйте кнопки меню для навигации 😊" if lang == 'ru' else "Use menu buttons for navigation 😊"
     else:
         response = "Пожалуйста, выберите язык / Please choose language:"
     bot.send_message(chat_id, response)
